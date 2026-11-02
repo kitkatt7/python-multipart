@@ -189,25 +189,37 @@ every HTTP client.
 """
 
 
+def _find_separator(s: str, start: int) -> int:
+    # Index of the first `;` at or after `start` that is not inside a double-quoted string, or `len(s)` if there is
+    # none. Inside the quotes a backslash escapes the next character, so `\"` does not close the string and `\\"` does.
+    n = len(s)
+    i = start
+    while True:
+        sep = s.find(";", i)
+        if sep == -1:
+            sep = n
+        quote = s.find('"', i, sep)
+        if quote == -1:
+            return sep
+        i = quote + 1
+        while i < n and s[i] != '"':
+            i += 2 if s[i] == "\\" else 1
+        i += 1
+
+
 def _parseparam(s: str) -> list[str]:
-    # Vendored from the standard library's
+    # Adapted from the standard library's
     # [`email.message._parseparam`](https://github.com/python/cpython/blob/v3.14.2/Lib/email/message.py#L73-L96)
     # to split a header into its `;`-separated parts without treating a `;` inside a double-quoted string as a
     # separator - and without the RFC 2231 decoding that `email.message.Message.get_params` would apply on top.
+    # The original pairs up quotes by counting them, and counts a `"` as escaped whenever a backslash precedes it,
+    # even an escaped one, so `"a\\"; filename="b"` ran the quoted-string on into the next parameter.
     s = ";" + s
     plist: list[str] = []
     start = 0
     while s.find(";", start) == start:
         start += 1
-        end = s.find(";", start)
-        ind, diff = start, 0
-        while end > 0:
-            diff += s.count('"', ind, end) - s.count('\\"', ind, end)
-            if diff % 2 == 0:
-                break
-            end, ind = ind, s.find(";", end + 1)
-        if end < 0:
-            end = len(s)
+        end = _find_separator(s, start)
         i = s.find("=", start, end)
         if i == -1:
             f = s[start:end]

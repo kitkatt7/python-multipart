@@ -363,6 +363,11 @@ class TestParseOptionsHeader(unittest.TestCase):
 
         self.assertEqual(p, {b"q": b"a\\b"})
 
+    def test_escaped_backslash_before_closing_quote(self) -> None:
+        _, p = parse_options_header(b'form-data; name="a\\\\"; filename="b.txt"')
+
+        self.assertEqual(p, {b"name": b"a\\", b"filename": b"b.txt"})
+
 
 class TestBaseParser(unittest.TestCase):
     def setUp(self) -> None:

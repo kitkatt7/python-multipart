@@ -1,0 +1,6 @@
+--boundary
+Content-Disposition: form-data; name="field\\"; filename="file.txt"
+Content-Type: text/plain
+
+test
+--boundary--

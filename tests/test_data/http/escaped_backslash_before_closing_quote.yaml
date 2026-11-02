@@ -1,0 +1,8 @@
+boundary: boundary
+expected:
+  - name: field\
+    type: file
+    file_name: file.txt
+    content_type: 'text/plain'
+    data: !!binary |
+      dGVzdA==
