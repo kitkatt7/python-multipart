@@ -1368,6 +1368,17 @@ class MultipartParser(BaseParser):
                 cr = data.find(b"\r", i, length)
                 end = cr if cr != -1 else length
                 advance_header_size(end - i)
+
+                # RFC 9110 §5.5: CR, LF and NUL are invalid in a field value. A CR ends the value, so
+                # reject a bare LF or NUL instead of keeping it as part of the value.
+                lf = data.find(b"\n", i, end)
+                nul = data.find(b"\x00", i, end)
+                if lf != -1 or nul != -1:
+                    bad_i = min(x for x in (lf, nul) if x != -1)
+                    msg = "Found invalid character %r in header value at %d" % (data[bad_i], bad_i)
+                    self.logger.warning(msg)
+                    raise MultipartParseError(msg, offset=bad_i)
+
                 if cr != -1:
                     i = cr
                     data_callback("header_value", i)
