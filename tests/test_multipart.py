@@ -1654,6 +1654,39 @@ class TestFormParser(unittest.TestCase):
                     b"--boundary--"
                 ),
             ],
+            [
+                b"\r\nignored pre-amble\r\n"
+                + (
+                    b"--boundary\r\n"
+                    b'Content-Disposition: form-data; name="file"; filename="filename.txt"\r\n'
+                    b"Content-Type: text/plain\r\n\r\n"
+                    b"hello\r\n"
+                    b"--boundary--"
+                )
+            ],
+            [
+                b"\r\nignored --boundary\r\n"
+                b'Content-Disposition: form-data; name="file"; filename="preamble.txt"\r\n\r\n'
+                b"preamble\r\n"
+                + (
+                    b"--boundary\r\n"
+                    b'Content-Disposition: form-data; name="file"; filename="filename.txt"\r\n'
+                    b"Content-Type: text/plain\r\n\r\n"
+                    b"hello\r\n"
+                    b"--boundary--"
+                )
+            ],
+            [
+                b"\r\n",
+                b"ignored\r\n",
+                (
+                    b"--boundary\r\n"
+                    b'Content-Disposition: form-data; name="file"; filename="filename.txt"\r\n'
+                    b"Content-Type: text/plain\r\n\r\n"
+                    b"hello\r\n"
+                    b"--boundary--"
+                ),
+            ],
         ],
     )
     def test_multipart_parser_preamble_before_first_boundary(self, chunks: list[bytes]) -> None:

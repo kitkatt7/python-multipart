@@ -1210,22 +1210,27 @@ class MultipartParser(BaseParser):
             c = data[i]
 
             if state == START:
-                # Skip leading newlines
-                if c == CR or c == LF:
-                    i = data.find(b"-", i)
-                    if i == -1:
-                        # No boundary candidate in this chunk, so ignore the content after the leading CR/LF.
+                # A preamble starts with a newline and ends at the first hyphen that starts a line. Across chunks,
+                # `index` is 1 inside a preamble line and 2 at the start of one.
+                if (index == 0 and c != CR and c != LF) or (index == 2 and c == HYPHEN):
+                    # index is used as in index into our boundary.  Set to 0.
+                    index = 0
+
+                    # Move to the next state, but decrement i so that we re-process
+                    # this character.
+                    state = START_BOUNDARY
+                    i -= 1
+                else:
+                    j = data.find(b"\n-", i, length)
+                    if j == -1:
+                        # No boundary candidate in this chunk, so ignore the rest of the preamble.
+                        index = 2 if data[length - 1] == LF else 1
                         i = length
                         break
+                    index = 0
+                    state = START_BOUNDARY
+                    i = j + 1
                     continue
-
-                # index is used as in index into our boundary.  Set to 0.
-                index = 0
-
-                # Move to the next state, but decrement i so that we re-process
-                # this character.
-                state = START_BOUNDARY
-                i -= 1
 
             elif state == START_BOUNDARY:
                 if index == 0 and data.startswith(boundary[2:], i, length):
