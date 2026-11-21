@@ -1099,6 +1099,10 @@ class MultipartParser(BaseParser):
         # Save our boundary.
         if isinstance(boundary, str):  # pragma: no cover
             boundary = boundary.encode("latin-1")
+        # [RFC 2046 §5.1.1](https://datatracker.ietf.org/doc/html/rfc2046#section-5.1.1) requires at least one
+        # character; an empty boundary would make every `\r\n--` in the body a delimiter.
+        if not boundary:
+            raise FormParserError("Boundary must not be empty")
         if len(boundary) > MAX_BOUNDARY_LENGTH:
             raise FormParserError(f"Boundary length {len(boundary)} exceeds maximum of {MAX_BOUNDARY_LENGTH}")
         self.boundary = b"\r\n--" + boundary

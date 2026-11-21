@@ -1787,6 +1787,12 @@ class TestFormParser(unittest.TestCase):
         # 256 should be accepted.
         MultipartParser(b"x" * 256)
 
+    def test_empty_boundary(self) -> None:
+        with self.assertRaisesRegex(FormParserError, "Boundary must not be empty"):
+            MultipartParser(b"")
+        with self.assertRaisesRegex(FormParserError, "Boundary must not be empty"):
+            FormParser("multipart/form-data", None, None, boundary=b"")
+
     def test_header_begin_callback(self) -> None:
         """
         This test verifies we call the `on_header_begin` callback.
